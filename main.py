@@ -75,29 +75,40 @@ class NeuralNetwork:
 
     def minmaxCalc(self, x, xmin, xmax):
         return (x - xmin) / (xmax - xmin)
+    
+    def inverse_minmax_calc(self, x_scaled, xmin, xmax):
+        return x_scaled * (xmax - xmin) + xmin
+    
+    def inverse_minimax_scaling(self, data):
+        if len(self.minmaxScalingParams) > 0:
+            inversed = [
+                self.inverse_minmax_calc(data, self.minmaxScalingParams[2][0], self.minmaxScalingParams[2][1])
+            ]
+            return inversed
 
     def minmaxScaling(self, data):
         if len(self.minmaxScalingParams) > 0:
-            scaled = [
-                self.minmaxCalc(data[0], self.minmaxScalingParams[0][0], self.minmaxScalingParams[0][1]),
-                self.minmaxCalc(data[1], self.minmaxScalingParams[1][0], self.minmaxScalingParams[1][1])
-            ]
+            scaled = []
+            for index, _ in enumerate(data):
+                scaled.append(self.minmaxCalc(data[index], self.minmaxScalingParams[index][0], self.minmaxScalingParams[index][1]))
+
             return scaled
         
-        col1 = []
-        col2 = []
-        for data_item in data:
-            col1.append(data_item[0])
-            col2.append(data_item[1])
+        for colIndex, _ in enumerate(data[0]):
+            col = []
+            for rowIndex, _ in enumerate(data):
+                col.append(data[rowIndex][colIndex])
+            
+            colMinmaxParms = self.getMinmaxParams(col)
+            self.minmaxScalingParams.append([colMinmaxParms[0], colMinmaxParms[1]])
 
-        col1MinmaxParams = self.getMinmaxParams(col1)
-        col2MinmaxParams = self.getMinmaxParams(col2)
-        self.minmaxScalingParams.append([col1MinmaxParams[0], col1MinmaxParams[1]])
-        self.minmaxScalingParams.append([col2MinmaxParams[0], col2MinmaxParams[1]])
-
-        for index, _ in enumerate(data):
-            data[index][0] = self.minmaxCalc(data[index][0], col1MinmaxParams[0], col1MinmaxParams[1])
-            data[index][1] = self.minmaxCalc(data[index][1], col2MinmaxParams[0], col2MinmaxParams[1])
+        for dIndex, data_item in enumerate(data):
+            for item_index, _ in enumerate(data_item):
+                data[dIndex][item_index] = self.minmaxCalc(
+                    data[dIndex][item_index], 
+                    self.minmaxScalingParams[item_index][0], 
+                    self.minmaxScalingParams[item_index][1]
+                )
 
         return data
 
@@ -196,11 +207,12 @@ class NeuralNetwork:
                     y_preds.append(self.feedForward(data_item))
 
                 loss = mse(answers, y_preds)
-                if showLossPlot:
-                    plotDataX.append(epoch)
-                    plotDataY.append(loss)
+                plotDataX.append(epoch)
+                plotDataY.append(loss)
                 print(f'Epoch {epoch} loss = {loss}')
-        
+
+            print(f'Last epoch: loss = {plotDataY[-1]}')
+
         if showLossPlot:
             plt.plot(plotDataX, plotDataY)
             plt.title("Loss")
@@ -221,7 +233,7 @@ data = [
         [55, 165],
         [78, 174],
         [101, 182],
-        [63, 169],
+        [63, 169]
     ]
 
 answers = [1, 0, 0, 1, 1, 0, 0, 1]
@@ -232,12 +244,18 @@ nn.train(data, answers, 1000, 0.1, True)
 
 emily = [52, 160]
 frank = [63, 173]
+dan = [93, 178]
 alice = [85, 176]
+eu = [59, 162]
 
 emily = nn.minmaxScaling(emily)
 frank = nn.minmaxScaling(frank)
 alice = nn.minmaxScaling(alice)
+eu = nn.minmaxScaling(eu)
+dan = nn.minmaxScaling(dan)
 
 print(f'Emily: {emily} -> {nn.feedForward(emily)}')
 print(f'Frank: {frank} -> {nn.feedForward(frank)}')
 print(f'Alice: {alice} -> {nn.feedForward(alice)}')
+print(f'Eugenia: {eu} -> {nn.feedForward(eu)}')
+print(f'Dan: {dan} -> {nn.feedForward(dan)}')
