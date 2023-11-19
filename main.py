@@ -68,10 +68,8 @@ class NeuralNetwork:
     def getMinmaxParams(self, column):
         colMin = colMax = column[0]
         for col_item in column:
-            if colMin > col_item:
-                colMin = col_item
-            if colMax < col_item:
-                colMax = col_item
+            colMin = min(colMin, col_item)
+            colMax = max(colMax, col_item)
 
         return (colMin, colMax)
 
@@ -117,9 +115,7 @@ class NeuralNetwork:
 
         return self.output.extendedFeedForward(feedForwardList)
     
-    def train(self, data, answers, showLossPlot):
-        rate = 0.1
-        epochs = 1000
+    def train(self, data, answers, epochs, rate, showLossPlot):
         plotDataX = []
         plotDataY = []
         for epoch in range(epochs):
@@ -232,7 +228,7 @@ answers = [1, 0, 0, 1, 1, 0, 0, 1]
 
 nn.minmaxScaling(data)
 
-nn.train(data, answers, False)
+nn.train(data, answers, 1000, 0.1, True)
 
 emily = [52, 160]
 frank = [63, 173]
