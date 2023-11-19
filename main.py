@@ -35,13 +35,13 @@ class Neuron:
         self.weights = weights
         self.bias = bias
 
-    def feedForward(self, inputs) -> float:
+    def feed_forward(self, inputs) -> float:
         value = dot(inputs, self.weights) + self.bias
         f_sigmoid = sigmoid(value)
         print(f'Feed forward. S: {f_sigmoid} V: {value}')
         return f_sigmoid
     
-    def extendedFeedForward(self, inputs) -> tuple:
+    def extended_feed_forward(self, inputs) -> tuple:
         value = dot(inputs, self.weights) + self.bias
         f_sigmoid = sigmoid(value)
         print(f'Extended feed forward. S: {f_sigmoid} V: {value}')
@@ -60,12 +60,12 @@ params: [
 class NeuralNetwork:
     def __init__(self, inputs, output) -> None:
         self.output = Neuron(output[0], output[1])
-        self.minmaxScalingParams = []
+        self.minmax_scaling_params = []
         self.networks = []
         for input in inputs:
             self.networks.append(Neuron(input[0], input[1])) # weights, bias
 
-    def getMinmaxParams(self, column):
+    def get_minmax_params(self, column):
         colMin = colMax = column[0]
         for col_item in column:
             colMin = min(colMin, col_item)
@@ -73,24 +73,24 @@ class NeuralNetwork:
 
         return (colMin, colMax)
 
-    def minmaxCalc(self, x, xmin, xmax):
+    def minmax_calc(self, x, xmin, xmax):
         return (x - xmin) / (xmax - xmin)
     
     def inverse_minmax_calc(self, x_scaled, xmin, xmax):
         return x_scaled * (xmax - xmin) + xmin
     
     def inverse_minimax_scaling(self, data):
-        if len(self.minmaxScalingParams) > 0:
+        if len(self.minmax_scaling_params) > 0:
             inversed = [
-                self.inverse_minmax_calc(data, self.minmaxScalingParams[2][0], self.minmaxScalingParams[2][1])
+                self.inverse_minmax_calc(data, self.minmax_scaling_params[2][0], self.minmax_scaling_params[2][1])
             ]
             return inversed
 
-    def minmaxScaling(self, data):
-        if len(self.minmaxScalingParams) > 0:
+    def minmax_scaling(self, data):
+        if len(self.minmax_scaling_params) > 0:
             scaled = []
             for index, _ in enumerate(data):
-                scaled.append(self.minmaxCalc(data[index], self.minmaxScalingParams[index][0], self.minmaxScalingParams[index][1]))
+                scaled.append(self.minmax_calc(data[index], self.minmax_scaling_params[index][0], self.minmax_scaling_params[index][1]))
 
             return scaled
         
@@ -99,47 +99,47 @@ class NeuralNetwork:
             for rowIndex, _ in enumerate(data):
                 col.append(data[rowIndex][colIndex])
             
-            colMinmaxParms = self.getMinmaxParams(col)
-            self.minmaxScalingParams.append([colMinmaxParms[0], colMinmaxParms[1]])
+            col_minmax_parms = self.get_minmax_params(col)
+            self.minmax_scaling_params.append([col_minmax_parms[0], col_minmax_parms[1]])
 
         for dIndex, data_item in enumerate(data):
             for item_index, _ in enumerate(data_item):
-                data[dIndex][item_index] = self.minmaxCalc(
+                data[dIndex][item_index] = self.minmax_calc(
                     data[dIndex][item_index], 
-                    self.minmaxScalingParams[item_index][0], 
-                    self.minmaxScalingParams[item_index][1]
+                    self.minmax_scaling_params[item_index][0], 
+                    self.minmax_scaling_params[item_index][1]
                 )
 
         return data
 
-    def feedForward(self, inputs) -> float:
-        feedForwardList = []
+    def feed_forward(self, inputs) -> float:
+        feed_forward_list = []
         for neural in self.networks:
-            feedForwardList.append(neural.feedForward(inputs))
+            feed_forward_list.append(neural.feed_forward(inputs))
 
-        return self.output.feedForward(feedForwardList)
+        return self.output.feed_forward(feed_forward_list)
     
-    def extendedFeedForward(self, inputs) -> tuple:
-        feedForwardList = []
+    def extended_feed_forward(self, inputs) -> tuple:
+        feed_forward_list = []
         for neuron in self.networks:
-            feedForwardList.append(neuron.extendedFeedForward(inputs))
+            feed_forward_list.append(neuron.extended_feed_forward(inputs))
 
-        return self.output.extendedFeedForward(feedForwardList)
+        return self.output.extended_feed_forward(feed_forward_list)
     
     def train(self, data, answers, epochs, rate, showLossPlot):
-        plotDataX = []
-        plotDataY = []
+        plot_data_x = []
+        plot_data_y = []
         for epoch in range(epochs):
             for x, y_entity in zip(data, answers):
                 h_pred_list = []
                 for neuron in self.networks:
-                    h_pred_list.append(neuron.extendedFeedForward(x))
+                    h_pred_list.append(neuron.extended_feed_forward(x))
 
                 h_pred_out = []
                 for h_pred in h_pred_list:
                     h_pred_out.append(h_pred[0])
 
-                y_pred = self.output.extendedFeedForward(h_pred_out)
+                y_pred = self.output.extended_feed_forward(h_pred_out)
                 print(f'Predicted: {y_pred[0]}')
 
                 dl_dy_pred = -2*(y_entity - y_pred[0])
@@ -152,43 +152,43 @@ class NeuralNetwork:
                     dy_pred_dh.append(weight * derived_sigmoid(y_pred[1]))
                 
                 dy_pred_db = []
-                allNeuronList = self.networks + [self.output]
-                for neuron in allNeuronList:
-                    sum = neuron.extendedFeedForward(x)[1]
+                all_neuron_list = self.networks + [self.output]
+                for neuron in all_neuron_list:
+                    sum = neuron.extended_feed_forward(x)[1]
                     print(f'Neuron weights: {neuron.weights}')
                     dy_pred_db.append(derived_sigmoid(sum))
 
                 d_hn_dw = []
                 for neuron in self.networks:
                     for x_entity in x:
-                        sum = neuron.extendedFeedForward(x)[1]
+                        sum = neuron.extended_feed_forward(x)[1]
                         d_hn_dw.append(x_entity * derived_sigmoid(sum))
 
-                paramCollector = []
+                param_collector = []
                 for index, neuron in enumerate(self.networks):
                     param = {
                             "weights": [d_hn_dw[index * 2], d_hn_dw[index * 2 + 1]],
                             "bias": dy_pred_db[index],
                             "dy_pred_dh": dy_pred_dh[index]
                         }
-                    paramCollector.append(param) # pair
+                    param_collector.append(param) # pair
 
                 print(f'h predicated: {h_pred_list}')
                 print(f'dy pred dh: {dy_pred_dh}')
                 print(f'dy pred db: {dy_pred_db}')
                 print(f'dy hn dw: {d_hn_dw}')
-                print(f'rebalancing param collector: {paramCollector}')
+                print(f'rebalancing param collector: {param_collector}')
 
                 # Updating params
                 # Updating hidden layers
                 for nIndex, neuron in enumerate(self.networks):
                     for wIndex, _ in enumerate(neuron.weights):
                         print(f'Old weights: {neuron.weights}')
-                        neuron.weights[wIndex] -= rate * dl_dy_pred * paramCollector[nIndex]["dy_pred_dh"] * paramCollector[nIndex]["weights"][wIndex]
+                        neuron.weights[wIndex] -= rate * dl_dy_pred * param_collector[nIndex]["dy_pred_dh"] * param_collector[nIndex]["weights"][wIndex]
                         print(f'New weights: {neuron.weights}')
                     
                     print(f'Old bias: {neuron.bias}')
-                    neuron.bias -= rate * dl_dy_pred * paramCollector[nIndex]["dy_pred_dh"] * paramCollector[nIndex]["bias"]
+                    neuron.bias -= rate * dl_dy_pred * param_collector[nIndex]["dy_pred_dh"] * param_collector[nIndex]["bias"]
                     print(f'New bias: {neuron.bias}')
 
                 # Updating output layer
@@ -204,17 +204,17 @@ class NeuralNetwork:
             if epoch % 10 == 0:
                 y_preds = []
                 for data_item in data:
-                    y_preds.append(self.feedForward(data_item))
+                    y_preds.append(self.feed_forward(data_item))
 
                 loss = mse(answers, y_preds)
-                plotDataX.append(epoch)
-                plotDataY.append(loss)
+                plot_data_x.append(epoch)
+                plot_data_y.append(loss)
                 print(f'Epoch {epoch} loss = {loss}')
 
-            print(f'Last epoch: loss = {plotDataY[-1]}')
+            print(f'Last epoch: loss = {plot_data_y[-1]}')
 
         if showLossPlot:
-            plt.plot(plotDataX, plotDataY)
+            plt.plot(plot_data_x, plot_data_y)
             plt.title("Loss")
             plt.show()
 
@@ -238,7 +238,7 @@ data = [
 
 answers = [1, 0, 0, 1, 1, 0, 0, 1]
 
-nn.minmaxScaling(data)
+nn.minmax_scaling(data)
 
 nn.train(data, answers, 1000, 0.1, True)
 
@@ -248,14 +248,14 @@ dan = [93, 178]
 alice = [85, 176]
 eu = [59, 162]
 
-emily = nn.minmaxScaling(emily)
-frank = nn.minmaxScaling(frank)
-alice = nn.minmaxScaling(alice)
-eu = nn.minmaxScaling(eu)
-dan = nn.minmaxScaling(dan)
+emily = nn.minmax_scaling(emily)
+frank = nn.minmax_scaling(frank)
+alice = nn.minmax_scaling(alice)
+eu = nn.minmax_scaling(eu)
+dan = nn.minmax_scaling(dan)
 
-print(f'Emily: {emily} -> {nn.feedForward(emily)}')
-print(f'Frank: {frank} -> {nn.feedForward(frank)}')
-print(f'Alice: {alice} -> {nn.feedForward(alice)}')
-print(f'Eugenia: {eu} -> {nn.feedForward(eu)}')
-print(f'Dan: {dan} -> {nn.feedForward(dan)}')
+print(f'Emily: {emily} -> {nn.feed_forward(emily)}')
+print(f'Frank: {frank} -> {nn.feed_forward(frank)}')
+print(f'Alice: {alice} -> {nn.feed_forward(alice)}')
+print(f'Eugenia: {eu} -> {nn.feed_forward(eu)}')
+print(f'Dan: {dan} -> {nn.feed_forward(dan)}')
